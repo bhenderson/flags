@@ -15,7 +15,7 @@ func Env(fs *flag.FlagSet) {
 	fs.VisitAll(func(f *flag.Flag) {
 		name := strings.ToUpper(f.Name)
 		for _, e := range env {
-			if strings.HasPrefix(e, name) {
+			if strings.HasPrefix(e, name+"=") {
 				fs.Set(f.Name, e[len(name)+1:])
 				break
 			}

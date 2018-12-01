@@ -15,11 +15,15 @@ func TestEnv(t *testing.T) {
 	}{
 		{
 			[]string{
-				"A-STRIN=ignore",
 				"A-STRING=ohmy",
-				"A-STRINGG=ignore",
 			},
 			"ohmy",
+		},
+		{
+			[]string{
+				"A-STRINGG=ohmy",
+			},
+			"default",
 		},
 	}
 
