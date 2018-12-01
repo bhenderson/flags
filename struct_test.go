@@ -11,6 +11,7 @@ func TestStruct(t *testing.T) {
 	type Config struct {
 		AString string
 		BString string `flags:"b,set b"`
+		CString *string
 	}
 
 	tcs := []struct {
@@ -28,6 +29,12 @@ func TestStruct(t *testing.T) {
 			&Config{},
 			&Config{BString: "hello"},
 			[]string{"-b=hello"},
+			nil,
+		},
+		{
+			&Config{CString: new(string)},
+			&Config{CString: func() *string { s := "hello"; return &s }()},
+			[]string{"-Config.CString=hello"},
 			nil,
 		},
 		{

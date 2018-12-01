@@ -36,6 +36,10 @@ func addStruct(v reflect.Value, fs *flag.FlagSet) {
 			}
 		}
 		sv := v.Field(i)
-		Flag(sv.Addr().Interface(), name, usage, fs)
+		val := sv.Interface()
+		if sv.Kind() != reflect.Ptr {
+			val = sv.Addr().Interface()
+		}
+		Flag(val, name, usage, fs)
 	}
 }
