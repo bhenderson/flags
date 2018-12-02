@@ -10,8 +10,11 @@ import (
 var ErrNotStruct = fmt.Errorf("not a pointer to a struct")
 
 func Struct(v interface{}, fs *flag.FlagSet) error {
+	if v == nil {
+		return nil
+	}
 	val := reflect.ValueOf(v)
-	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct || val.IsNil() {
+	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
 		return ErrNotStruct
 	}
 	addStruct(val.Elem(), fs)
