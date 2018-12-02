@@ -24,9 +24,6 @@ func Flag(v interface{}, name, usage string, fs *flag.FlagSet) {
 	case *int:
 		fs.IntVar(x, name, *x, usage)
 	case *string:
-		if x == nil {
-			return
-		}
 		fs.StringVar(x, name, *x, usage)
 	case *uint64:
 		fs.Uint64Var(x, name, *x, usage)
