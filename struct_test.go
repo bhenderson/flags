@@ -8,14 +8,21 @@ import (
 	"testing"
 )
 
-func TestStruct(t *testing.T) {
-	type Config struct {
-		AString string
-		BString string `flags:"b,set b"`
-		CString *string
-	}
+// -- string Value
+type stringValue string
 
-	makeErr := fmt.Errorf
+func newStringValue(val string) *stringValue {
+	return (*stringValue)(&val)
+}
+
+func (s *stringValue) Set(val string) error {
+	*s = stringValue(val)
+	return nil
+}
+func (s *stringValue) String() string { return string(*s) }
+
+func TestStruct(t *testing.T) {
+	newErr := fmt.Errorf
 	equal := func(a, b error) bool {
 		if a == nil || b == nil {
 			return a == b
@@ -28,42 +35,49 @@ func TestStruct(t *testing.T) {
 		conf, exp interface{}
 		args      []string
 		err       error
-		parseErr  error
+		perr      error
 	}{
 		{
-			"set string",
-			&Config{},
-			&Config{AString: "hello"},
-			[]string{"-Config.AString=hello"},
-			nil, nil,
+			name: "set_string",
+			conf: &struct{ String string }{},
+			exp:  &struct{ String string }{"hello"},
+			args: []string{"-String=hello"},
 		},
 		{
-			"with flag",
-			&Config{},
-			&Config{BString: "hello"},
-			[]string{"-b=hello"},
-			nil, nil,
+			name: "with_tag",
+			conf: &struct {
+				String string `flags:"s"`
+			}{},
+			exp: &struct {
+				String string `flags:"s"`
+			}{"hello"},
+			args: []string{"-s=hello"},
 		},
 		{
-			"string ptr",
-			&Config{CString: new(string)},
-			&Config{CString: func() *string { s := "hello"; return &s }()},
-			[]string{"-Config.CString=hello"},
-			nil, nil,
+			name: "string_ptr",
+			conf: &struct{ String *string }{new(string)},
+			exp:  &struct{ String *string }{func() *string { s := "hello"; return &s }()},
+			args: []string{"-String=hello"},
 		},
 		{
-			"nil ptr",
-			&Config{},
-			&Config{},
-			[]string{"-Config.CString=hello"},
-			nil, makeErr("flag provided but not defined: -Config.CString"),
+			name: "nil_ptr",
+			conf: &struct{ String *string }{},
+			args: []string{"-String=hello"},
+			perr: newErr("flag provided but not defined: -String"),
 		},
 		{
-			name: "all nils",
+			name: "all_nils",
 		},
 		{
-			"not a ptr",
-			Config{}, nil, nil, ErrNotStruct, nil,
+			name: "not_a_ptr",
+			conf: struct{}{},
+			err:  ErrNotStruct,
+		},
+		{
+			name: "flag.Value",
+			conf: &struct{ Val flag.Value }{newStringValue("")},
+			exp:  &struct{ Val flag.Value }{newStringValue("hello")},
+			args: []string{"-Val=hello"},
 		},
 	}
 
@@ -81,14 +95,14 @@ func TestStruct(t *testing.T) {
 			}
 
 			err = fs.Parse(tc.args)
-			if tc.parseErr != nil || err != nil {
-				if !equal(tc.parseErr, err) {
-					t.Errorf("expected parse error(%v) got error(%v)", tc.parseErr, err)
+			if tc.perr != nil || err != nil {
+				if !equal(tc.perr, err) {
+					t.Errorf("expected parse error(%v) got error(%v)", tc.perr, err)
 				}
 				return
 			}
 			if !reflect.DeepEqual(tc.exp, tc.conf) {
-				t.Errorf("expected:\n%#v\ngot:\n%v", tc.exp, tc.conf)
+				t.Errorf("expected:\n%#v\ngot:\n%#v", tc.exp, tc.conf)
 			}
 		})
 	}
