@@ -107,3 +107,23 @@ func TestStruct(t *testing.T) {
 		})
 	}
 }
+
+func TestStruct_ignore(t *testing.T) {
+	// {
+	// 	name: "ignore",
+	// 	args: []string{"-String=hello"},
+	// 	perr: newErr("flag provided but not defined: -String"),
+	// },
+
+	conf := &struct {
+		String string `flags:"-"`
+	}{}
+	fs := flag.NewFlagSet("ignore", flag.ContinueOnError)
+	err := Struct(conf, fs)
+	if err != nil {
+		t.Errorf("got an error: %v", err)
+	}
+	if fs.Lookup("-") != nil {
+		t.Errorf("expected not to create flag -")
+	}
+}

@@ -34,6 +34,9 @@ func addStruct(v reflect.Value, fs *flag.FlagSet) {
 			ts := strings.SplitN(tag, ",", 2)
 			if ts[0] != "" {
 				name = ts[0]
+				if name == "-" {
+					continue
+				}
 			}
 			if len(ts) > 1 {
 				usage = ts[1]
