@@ -4,8 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // -- string Value
@@ -16,20 +17,13 @@ func newStringValue(val string) *stringValue {
 }
 
 func (s *stringValue) Set(val string) error {
-	*s = stringValue(val)
+	*s = stringValue(val + " world")
 	return nil
 }
 func (s *stringValue) String() string { return string(*s) }
 
 func TestStruct(t *testing.T) {
 	newErr := fmt.Errorf
-	equal := func(a, b error) bool {
-		if a == nil || b == nil {
-			return a == b
-		}
-		return a.Error() == b.Error()
-	}
-
 	tcs := []struct {
 		name      string
 		conf, exp interface{}
@@ -76,7 +70,7 @@ func TestStruct(t *testing.T) {
 		{
 			name: "flag.Value",
 			conf: &struct{ Val flag.Value }{newStringValue("")},
-			exp:  &struct{ Val flag.Value }{newStringValue("hello")},
+			exp:  &struct{ Val flag.Value }{newStringValue("hello world")},
 			args: []string{"-Val=hello"},
 		},
 	}
@@ -88,22 +82,16 @@ func TestStruct(t *testing.T) {
 
 			err := Struct(tc.conf, fs)
 			if tc.err != nil || err != nil {
-				if !equal(tc.err, err) {
-					t.Errorf("expected error(%v) got error(%v)", tc.err, err)
-				}
+				assert.EqualError(t, err, tc.err.Error())
 				return
 			}
 
 			err = fs.Parse(tc.args)
 			if tc.perr != nil || err != nil {
-				if !equal(tc.perr, err) {
-					t.Errorf("expected parse error(%v) got error(%v)", tc.perr, err)
-				}
+				assert.EqualError(t, err, tc.perr.Error())
 				return
 			}
-			if !reflect.DeepEqual(tc.exp, tc.conf) {
-				t.Errorf("expected:\n%#v\ngot:\n%#v", tc.exp, tc.conf)
-			}
+			assert.Equal(t, tc.exp, tc.conf)
 		})
 	}
 }

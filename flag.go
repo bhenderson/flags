@@ -3,11 +3,16 @@ package flags
 import (
 	"flag"
 	"fmt"
+	"reflect"
 	"time"
 )
 
 // Flag takes an interface and sets it on the given FlagSet
 func Flag(v interface{}, name, usage string, fs *flag.FlagSet) {
+	val := reflect.ValueOf(v)
+	if v == nil || val.Kind() == reflect.Ptr && val.IsNil() {
+		return
+	}
 	if fs == nil {
 		fs = flag.CommandLine
 	}
