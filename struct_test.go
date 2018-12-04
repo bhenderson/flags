@@ -23,6 +23,9 @@ func (s *stringValue) Set(val string) error {
 func (s *stringValue) String() string { return string(*s) }
 
 func TestStruct(t *testing.T) {
+	type Named struct {
+		String string
+	}
 	newErr := fmt.Errorf
 	tcs := []struct {
 		name      string
@@ -46,6 +49,14 @@ func TestStruct(t *testing.T) {
 				String string `flags:"s"`
 			}{"hello"},
 			args: []string{"-s=hello"},
+		},
+		{
+			name: "with_tag",
+			conf: &struct {
+				String string `flags:"s"`
+			}{},
+			args: []string{"-String=hello"},
+			perr: newErr("flag provided but not defined: -String"),
 		},
 		{
 			name: "string_ptr",
@@ -73,6 +84,24 @@ func TestStruct(t *testing.T) {
 			exp:  &struct{ Val flag.Value }{newStringValue("hello world")},
 			args: []string{"-Val=hello"},
 		},
+		{
+			name: "Named",
+			conf: &Named{},
+			exp:  &Named{"hello"},
+			args: []string{"-Named.String=hello"},
+		},
+		{
+			name: "nested",
+			conf: &struct{ Nested Named }{},
+			exp:  &struct{ Nested Named }{Named{"hello"}},
+			args: []string{"-Nested.Named.String=hello"},
+		},
+		{
+			name: "embedded",
+			conf: &struct{ Named }{},
+			exp:  &struct{ Named }{Named{"hello"}},
+			args: []string{"-Named.String=hello"},
+		},
 	}
 
 	for _, tc := range tcs {
@@ -82,13 +111,21 @@ func TestStruct(t *testing.T) {
 
 			err := Struct(tc.conf, fs)
 			if tc.err != nil || err != nil {
-				assert.EqualError(t, err, tc.err.Error())
+				if tc.err == nil {
+					assert.NoError(t, err)
+				} else {
+					assert.EqualError(t, err, tc.err.Error())
+				}
 				return
 			}
 
 			err = fs.Parse(tc.args)
 			if tc.perr != nil || err != nil {
-				assert.EqualError(t, err, tc.perr.Error())
+				if tc.perr == nil {
+					assert.NoError(t, err)
+				} else {
+					assert.EqualError(t, err, tc.perr.Error())
+				}
 				return
 			}
 			assert.Equal(t, tc.exp, tc.conf)
@@ -114,4 +151,17 @@ func TestStruct_ignore(t *testing.T) {
 	if fs.Lookup("-") != nil {
 		t.Errorf("expected not to create flag -")
 	}
+}
+
+func TestStruct_usage(t *testing.T) {
+	conf := &struct {
+		String string `flags:",set a string"`
+	}{}
+	fs := flag.NewFlagSet("ignore", flag.ContinueOnError)
+	err := Struct(conf, fs)
+	if err != nil {
+		t.Errorf("got an error: %v", err)
+	}
+	exp := "set a string"
+	assert.Equal(t, exp, fs.Lookup("String").Usage)
 }

@@ -9,12 +9,21 @@ import (
 
 // Flag takes an interface and sets it on the given FlagSet
 func Flag(v interface{}, name, usage string, fs *flag.FlagSet) {
+	// log.Printf("adding flag %#v (%s)", v, name)
+	if v == nil {
+		return
+	}
 	val := reflect.ValueOf(v)
-	if v == nil || val.Kind() == reflect.Ptr && val.IsNil() {
+	if val.Kind() == reflect.Ptr && val.IsNil() {
 		return
 	}
 	if fs == nil {
 		fs = flag.CommandLine
+	}
+
+	if val.Kind() == reflect.Ptr && val.Elem().Kind() == reflect.Struct {
+		addStruct(val, name, fs)
+		return
 	}
 
 	switch x := v.(type) {

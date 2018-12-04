@@ -14,20 +14,24 @@ func Struct(v interface{}, fs *flag.FlagSet) error {
 		return nil
 	}
 	val := reflect.ValueOf(v)
-	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
-		return ErrNotStruct
-	}
-	addStruct(val.Elem(), fs)
-	return nil
+	return addStruct(val, "", fs)
 }
 
 var typeOfFlagValue = reflect.TypeOf((*flag.Value)(nil)).Elem()
 
-func addStruct(v reflect.Value, fs *flag.FlagSet) {
+func addStruct(v reflect.Value, prefix string, fs *flag.FlagSet) error {
+	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+		return ErrNotStruct
+	}
+	v = v.Elem()
 	vs := v.Type()
+	prefix = joinPath(prefix, vs.Name())
 	for i := 0; i < v.NumField(); i++ {
 		sf := vs.Field(i)
-		name := sf.Name
+		name := prefix
+		if !sf.Anonymous {
+			name = joinPath(name, sf.Name)
+		}
 		usage := ""
 		tag := sf.Tag.Get("flags")
 		if tag != "" {
@@ -48,4 +52,12 @@ func addStruct(v reflect.Value, fs *flag.FlagSet) {
 		}
 		Flag(sv.Interface(), name, usage, fs)
 	}
+	return nil
+}
+
+func joinPath(a, b string) string {
+	if a != "" && b != "" {
+		a += "."
+	}
+	return a + b
 }
