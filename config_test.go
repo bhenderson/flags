@@ -55,8 +55,8 @@ func TestConfig(t *testing.T) {
 var confFile = "config.conf"
 
 func writeConfFile(t *testing.T) func() {
-	content :=
-		`# a comment followed by a space
+	content := `
+# a comment followed by a space
 
 -a-string=hello
 -config=` + confFile + `
