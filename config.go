@@ -6,8 +6,8 @@ import (
 	"os"
 )
 
-// Config adds a flag to f. When encountered, the named file will be split and
-// given to f.Parse. Empty lines and lines beginning with # are ignored.
+// Config adds a flag to the FlagSet fs. When encountered, the named file will be split and
+// given to fs.Parse. Empty lines and lines beginning with # are ignored.
 func Config(name, usage string, fs *flag.FlagSet) {
 	if fs == nil {
 		fs = flag.CommandLine

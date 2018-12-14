@@ -9,6 +9,10 @@ import (
 
 var ErrNotStruct = fmt.Errorf("not a pointer to a struct")
 
+// Struct takes a pointer to a struct and sets flags based on the fields.
+// Field names are prefixed by the exported (unless anonymous) name.
+// The struct tag `flags:"name,usage"` is supported. "-" will ignore the field.
+// Usage is optional.
 func Struct(v interface{}, fs *flag.FlagSet) error {
 	if v == nil {
 		return nil

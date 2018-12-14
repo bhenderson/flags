@@ -8,6 +8,8 @@ import (
 )
 
 // Flag takes an interface and sets it on the given FlagSet
+// It panics if v is an unsupported type. It takes everything supported by the
+// flag package, as well as structs using Struct
 func Flag(v interface{}, name, usage string, fs *flag.FlagSet) {
 	// log.Printf("adding flag %#v (%s)", v, name)
 	if v == nil {
